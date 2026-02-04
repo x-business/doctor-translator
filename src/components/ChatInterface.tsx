@@ -16,7 +16,9 @@ import {
   FileText, 
   Settings,
   MessageSquare,
-  ArrowLeftRight
+  ArrowLeftRight,
+  AlertCircle,
+  X
 } from 'lucide-react';
 
 export function ChatInterface() {
@@ -26,6 +28,7 @@ export function ChatInterface() {
   const [showSettings, setShowSettings] = useState(false);
   const [summary, setSummary] = useState<ConversationSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -71,12 +74,24 @@ export function ChatInterface() {
         }),
       });
 
-      if (!response.ok) throw new Error('Translation failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+        throw new Error(errorData.error || `Translation failed with status ${response.status}`);
+      }
       
       const data = await response.json();
+      
+      if (!data.translatedText) {
+        throw new Error('Translation response is empty');
+      }
+      
       return data.translatedText;
     } catch (error) {
       console.error('Translation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Translation failed';
+      setError(`Translation error: ${errorMessage}. Please check your OpenAI API key configuration.`);
+      // Clear error after 5 seconds
+      setTimeout(() => setError(null), 5000);
       return '';
     }
   };
@@ -92,12 +107,23 @@ export function ChatInterface() {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Transcription failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+        throw new Error(errorData.error || `Transcription failed with status ${response.status}`);
+      }
       
       const data = await response.json();
+      
+      if (!data.text) {
+        throw new Error('Transcription response is empty');
+      }
+      
       return data.text;
     } catch (error) {
       console.error('Transcription error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Transcription failed';
+      setError(`Transcription error: ${errorMessage}. Please try again.`);
+      setTimeout(() => setError(null), 5000);
       return '';
     }
   };
@@ -221,6 +247,23 @@ export function ChatInterface() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-gradient-to-r from-red-50 to-red-100/50 border-b border-red-200 px-4 py-3 flex items-center justify-between gap-4 animate-slide-in">
+            <div className="flex items-center gap-3 flex-1">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <p className="text-sm text-red-800 font-medium">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="p-1.5 text-red-600 hover:bg-red-200 rounded-lg transition-colors flex-shrink-0"
+              aria-label="Dismiss error"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <header className="glass border-b border-slate-200/80 backdrop-blur-xl shadow-sm px-4 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between gap-4">

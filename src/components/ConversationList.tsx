@@ -97,10 +97,10 @@ export function ConversationList({ isOpen, onClose }: ConversationListProps) {
           ) : (
             <div className="space-y-2">
               {conversations.map((conversation) => (
-                <button
+                <div
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation.id)}
-                  className={`w-full p-4 text-left rounded-xl transition-all duration-200 card-hover ${
+                  className={`w-full p-4 text-left rounded-xl transition-all duration-200 card-hover cursor-pointer ${
                     currentConversationId === conversation.id 
                       ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-md' 
                       : 'bg-white/60 hover:bg-white border border-slate-200/60 hover:border-slate-300'
@@ -134,7 +134,7 @@ export function ConversationList({ isOpen, onClose }: ConversationListProps) {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}

@@ -49,8 +49,31 @@ ${context ? `Context: This is a ${context} speaking in a doctor-patient conversa
     return NextResponse.json({ translatedText });
   } catch (error) {
     console.error('Translation error:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        return NextResponse.json(
+          { error: 'OpenAI API key is invalid or missing. Please check your environment variables.' },
+          { status: 500 }
+        );
+      }
+      if (error.message.includes('rate limit') || error.message.includes('429')) {
+        return NextResponse.json(
+          { error: 'Rate limit exceeded. Please try again in a moment.' },
+          { status: 429 }
+        );
+      }
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        return NextResponse.json(
+          { error: 'Network error. Please check your internet connection.' },
+          { status: 503 }
+        );
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Translation failed. Please try again.' },
+      { error: error instanceof Error ? error.message : 'Translation failed. Please try again.' },
       { status: 500 }
     );
   }
